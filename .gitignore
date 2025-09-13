@@ -200,3 +200,5 @@ cython_debug/
 /examples/**/checkpoints
 /examples/**/output
 /examples/**/datasets
+
+*.mp4
