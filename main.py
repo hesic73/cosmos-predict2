@@ -6,6 +6,9 @@ from multiprocessing import get_context
 from typing import List
 from loguru import logger
 from imaginaire.utils.io import save_image_or_video
+from imaginaire.constants import get_cosmos_predict2_video2world_checkpoint
+from cosmos_predict2.configs.base.config_video2world import get_cosmos_predict2_video2world_pipeline
+from cosmos_predict2.pipelines.video2world import Video2WorldPipeline
 
 # File stem -> prompt mapping
 PROMPT_MAPPING = {
@@ -24,9 +27,6 @@ def setup_pipeline(model_size: str, device: str):
     Create the Cosmos2 Video2World pipeline on the given device.
     All heavy imports are inside so CUDA_VISIBLE_DEVICES is already set in the worker.
     """
-    from imaginaire.constants import get_cosmos_predict2_video2world_checkpoint
-    from cosmos_predict2.configs.base.config_video2world import get_cosmos_predict2_video2world_pipeline
-    from cosmos_predict2.pipelines.video2world import Video2WorldPipeline
 
     logger.info(
         f"Loading Cosmos2 pipeline on device: {device}, model_size: {model_size}")
@@ -63,9 +63,11 @@ def generate_videos_for_image(
 
     for video_idx in range(num_videos):
         # Generate unique seed for each video: base_seed + image_hash + video_idx
-        image_hash = hash(image_path) % 10000  # Simple hash to differentiate images
+        # Simple hash to differentiate images
+        image_hash = hash(image_path) % 10000
         unique_seed = base_seed + image_hash + video_idx * 1000
-        logger.info(f"{gpu_tag} Generating video {video_idx + 1}/{num_videos} with seed {unique_seed}")
+        logger.info(
+            f"{gpu_tag} Generating video {video_idx + 1}/{num_videos} with seed {unique_seed}")
         result = pipe(input_path=image_path, prompt=prompt, seed=unique_seed)
         output_file = os.path.join(output_dir, f"video_{video_idx:03d}.mp4")
         save_image_or_video(result, output_file)
@@ -74,7 +76,7 @@ def generate_videos_for_image(
 
 def _worker(
     visible_gpu: int,
-    image_paths: List[str],
+    image_paths: list[str],
     output_dir: str,
     model_size: str,
     num_videos: int,
